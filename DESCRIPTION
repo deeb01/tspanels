@@ -1,19 +1,20 @@
 Package: tspanels
 Title: Open Panels of Related Time Series, with Margins and Exposure
-Version: 0.1.0
+Version: 0.2.0
 Authors@R:
     person("Ahmed", "Eldeeb", email = "a.eldeeb@gmail.com",
            role = c("aut", "cre"))
 Description: Loads open collections of related time series into one long
     format: a series identifier, a date, the observed value, the categorical
     margins that index the series with the attributes nested in them, and,
-    where the source records one, an exposure variable giving the share of
-    each period during which the value could be observed. Exposure is
-    optional: a panel need not record it and a caller may drop it. Raw files
-    come from their official sources, fetched where the licence permits and
-    imported from the user's own download where it does not, and every file
-    is checked against a recorded SHA-256 checksum. Each loader documents the
-    decisions it makes in deriving the panel from the raw files.
+    where the source records one, an exposure variable: the share of each
+    period during which the value could be observed, or the number of units,
+    such as patients seen, it was observed among. Exposure is optional: a
+    panel need not record it and a caller may drop it. Raw files come from
+    their official sources, fetched where the licence permits and imported
+    from the user's own download where it does not, and every file is checked
+    against a recorded SHA-256 checksum. Each loader documents the decisions
+    it makes in deriving the panel from the raw files.
 License: MIT + file LICENSE
 Encoding: UTF-8
 Depends:

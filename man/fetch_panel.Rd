@@ -19,9 +19,16 @@ For panels whose licence permits automated download (\code{access == "fetch"} in
 \code{\link[=panels]{panels()}}), downloads each file from a pinned URL into \code{\link[=panel_dir]{panel_dir()}},
 checks it against its recorded SHA-256 checksum, and only then moves it into
 place. A file already present with the right checksum is not downloaded
-again. A checksum mismatch is an error and leaves nothing behind.
+again.
 }
 \details{
+What a mismatch means depends on the source. A file from a fixed release
+(\code{snapshot} is \code{NA} in \code{\link[=panel_info]{panel_info()}}) cannot change, so a mismatch is an
+error and leaves nothing behind. A file served by a live API is a snapshot:
+the query is pinned, but the source may revise what it returns, so a
+mismatch is a warning that names the file, and the file is kept.
+\code{panel_info(name)$pin} says what is pinned.
+
 Panels with \code{access == "import"} cannot be downloaded by tspanels: their
 terms require each user to obtain them from the source. For those, this
 function checks the files already in the cache and, if any are missing,

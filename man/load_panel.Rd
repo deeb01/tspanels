@@ -27,7 +27,7 @@ Returns one row per series and time point:
    column \tab type \tab meaning \cr
    \code{series_id} \tab factor \tab the series \cr
    \code{ds} \tab Date \tab the time point \cr
-   \code{y} \tab numeric \tab the observed value; \code{NA} where the source records that no observation was made \cr
+   \code{y} \tab numeric \tab the observed value; \code{NA} where the source records that no observation was made, or that the one made fails its own criteria \cr
    \code{exposure} \tab numeric \tab present only if the panel records exposure and \code{exposure = TRUE} \cr
    margins \tab factor \tab the key margins and nested attributes named in \code{\link[=panel_info]{panel_info()}} \cr
 }
@@ -36,14 +36,17 @@ Returns one row per series and time point:
 Rows are ordered by \code{series_id}, then \code{ds}. Factor levels are sorted in the
 C locale, so the order does not depend on the machine.
 
-\strong{Exposure} is the share of a period during which the value could be
-observed, on [0, 1]. A model for the mean takes it as a multiplier,
-\eqn{E[y_t] = e_t \lambda_t}, where \eqn{\lambda_t} is the value the series
-would show with full exposure. Where the source records nothing of the kind
-the column is absent. \code{exposure = FALSE} drops it, and the files used only
-to derive it are then not needed. Dropping it does not change \code{y}: a zero
-recorded while a store was shut is still a zero, and a model without
-exposure will see it as one.
+\strong{Exposure} measures how much of the value could be observed. Its unit,
+given by \code{\link[=panels]{panels()}}, is a share of the period on [0, 1] (\code{"fraction"},
+or \code{"binary"} when it is 0 or 1), or a number of units the value is
+observed among (\code{"count"}), such as patients seen or specimens tested. A
+model for the mean takes it as a multiplier, \eqn{E[y_t] = e_t \lambda_t}:
+for a share, \eqn{\lambda_t} is the value the series would show with full
+exposure; for a count, it is the value per unit. Where the source records
+nothing of the kind the column is absent. \code{exposure = FALSE} drops it, and
+the files used only to derive it are then not needed. Dropping it does not
+change \code{y}: a zero recorded while a store was shut is still a zero, and a
+model without exposure will see it as one.
 }
 \examples{
 \dontrun{

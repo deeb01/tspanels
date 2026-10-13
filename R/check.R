@@ -9,8 +9,9 @@
 #' 1. `series_id`, `ds` and `y` are present; `ds` is a Date and `y` numeric.
 #' 2. No series has two rows at the same `ds`.
 #' 3. If `exposure` is present: numeric, finite, non-negative; at most 1 for a
-#'    `"fraction"` unit and 0 or 1 for `"binary"`; and no row has a positive
-#'    `y` where exposure is 0, which a multiplicative model cannot fit.
+#'    `"fraction"` unit and 0 or 1 for `"binary"`, with no bound for a
+#'    `"count"`; and no row has a positive `y` where exposure is 0, which a
+#'    multiplicative model cannot fit.
 #' 4. Each key margin is constant within a series, and no two series share a
 #'    combination of key margins.
 #' 5. Each nested attribute is constant within the column it is nested in.
@@ -20,7 +21,8 @@
 #' @param key Key margin column names.
 #' @param nesting Named character vector: attribute = the column it is
 #'   constant within.
-#' @param exposure_unit `"binary"`, `"fraction"` or `NULL` (non-negative only).
+#' @param exposure_unit `"binary"`, `"fraction"`, `"count"` or `NULL`. A count
+#'   and `NULL` are checked as non-negative only.
 #' @return `d`, invisibly, if every check passes; otherwise an error listing
 #'   each violation.
 #' @examples
@@ -40,6 +42,9 @@ check_panel <- function(d, name = NULL, key = NULL, nesting = NULL,
     if (is.null(exposure_unit) && !is.na(p$exposure)) exposure_unit <- p$exposure_unit
   }
   if (!is.data.frame(d)) stop("`d` must be a data frame.", call. = FALSE)
+  if (!is.null(exposure_unit) &&
+      !(length(exposure_unit) == 1L && exposure_unit %in% c("binary", "fraction", "count")))
+    stop('`exposure_unit` must be "binary", "fraction", "count" or NULL.', call. = FALSE)
   bad <- character(0)
   add <- function(...) bad <<- c(bad, paste0(...))
 

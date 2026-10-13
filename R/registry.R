@@ -6,11 +6,16 @@
 #   nesting                  named character: attribute = the margin it is
 #                            constant within (city = "store_nbr")
 #   exposure                 how exposure is derived, or NA if none is recorded
-#   exposure_unit            "binary", "fraction" or NA
+#   exposure_unit            "binary" or "fraction" (a share of the period),
+#                            "count" (a number of units, such as patients
+#                            seen), or NA
 #   n_series, start, end     the full panel, as load_panel() returns it
 #   notes                    properties of the source a user should know
 #   access                   "fetch" (fetch_panel downloads it) or "import"
 #                            (the user downloads it; import_panel installs it)
+#   pin                      what fixes the content of the raw files
+#   snapshot                 for a file served by a live API, the date the
+#                            recorded checksums were taken; NA for fixed files
 #   source, licence          where it comes from and on what terms
 #   files                    data.frame(file, role, sha256, url); role is
 #                            "data" or "exposure" (needed only for exposure)
@@ -70,8 +75,10 @@ panels <- function() {
 #' @return A list: `title`, `domain`, `freq`, `key`, `nesting` (a named
 #'   character vector, attribute = the column it is constant within),
 #'   `exposure` (how it is derived, or `NA`), `exposure_unit`, `n_series`,
-#'   `start`, `end`, `notes`, `access`, `source`, `licence`, and `files` (a
-#'   data frame of file, role, sha256 and url).
+#'   `start`, `end`, `notes`, `access`, `pin` (what fixes the content of the
+#'   raw files), `snapshot` (for files served by a live API, the date their
+#'   checksums were taken, otherwise `NA`), `source`, `licence`, and `files`
+#'   (a data frame of file, role, sha256 and url).
 #' @examples
 #' panel_info("portal")$files
 #' @export

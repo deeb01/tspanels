@@ -4,7 +4,14 @@
 #' [panels()]), downloads each file from a pinned URL into [panel_dir()],
 #' checks it against its recorded SHA-256 checksum, and only then moves it into
 #' place. A file already present with the right checksum is not downloaded
-#' again. A checksum mismatch is an error and leaves nothing behind.
+#' again.
+#'
+#' What a mismatch means depends on the source. A file from a fixed release
+#' (`snapshot` is `NA` in [panel_info()]) cannot change, so a mismatch is an
+#' error and leaves nothing behind. A file served by a live API is a snapshot:
+#' the query is pinned, but the source may revise what it returns, so a
+#' mismatch is a warning that names the file, and the file is kept.
+#' `panel_info(name)$pin` says what is pinned.
 #'
 #' Panels with `access == "import"` cannot be downloaded by tspanels: their
 #' terms require each user to obtain them from the source. For those, this
@@ -30,11 +37,13 @@ fetch_panel <- function(name, quiet = FALSE) {
     .verify(name, strict = FALSE)
     return(invisible(panel_dir(name)))
   }
-  .fetch_files(p$files, panel_dir(name), quiet = quiet)
+  .fetch_files(p$files, panel_dir(name), quiet = quiet, snapshot = p$snapshot)
   invisible(panel_dir(name))
 }
 
-.fetch_files <- function(files, dir, quiet = FALSE) {
+# `snapshot`: NA for fixed files, where a mismatch is an error; otherwise the
+# date the recorded checksums were taken, and a mismatch is a warning.
+.fetch_files <- function(files, dir, quiet = FALSE, snapshot = NA_character_) {
   dir.create(dir, recursive = TRUE, showWarnings = FALSE)
   old <- options(timeout = max(600, getOption("timeout")))
   on.exit(options(old), add = TRUE)
@@ -47,10 +56,16 @@ fetch_panel <- function(name, quiet = FALSE) {
     if (status != 0L) stop("Download of ", files$url[i], " failed.", call. = FALSE)
     got <- .sha256(part)
     if (!identical(got, files$sha256[i])) {
-      unlink(part)
-      stop("Checksum mismatch for ", files$file[i], " from ", files$url[i],
-           ": expected ", files$sha256[i], ", got ", got, ". Nothing was kept.",
-           call. = FALSE)
+      if (is.na(snapshot)) {
+        unlink(part)
+        stop("Checksum mismatch for ", files$file[i], " from ", files$url[i],
+             ": expected ", files$sha256[i], ", got ", got, ". Nothing was kept.",
+             call. = FALSE)
+      }
+      warning(files$file[i], " differs from the snapshot of ", snapshot,
+              " that tspanels was tested on: the source has changed what it ",
+              "returns for the pinned query. Kept; results can differ from the ",
+              "documented ones.", call. = FALSE)
     }
     if (!file.rename(part, dest)) stop("Could not move ", part, " to ", dest, call. = FALSE)
   }

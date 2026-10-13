@@ -130,3 +130,135 @@ test_that("factor levels sort the same on every machine", {
   expect_equal(levels(r), c("x", "y"))
   expect_equal(as.character(r), c("x", "y", "x"))
 })
+
+test_that("ilinet: weeks start on the MMWR Sunday, across a 53-week year", {
+  local_cache(); fixture_ilinet()
+  d <- load_panel("ilinet")
+  expect_equal(levels(d$series_id), c("ca", "vi"))
+  expect_equal(d$ds[d$series_id == "ca"], as.Date(c("2014-12-21", "2014-12-28", "2015-01-04")))
+  # vi lacks 201501 in the source: absent, not filled
+  expect_equal(nrow(d), 5L)
+  expect_equal(sort(panel_series("ilinet")$series_id), levels(d$series_id))
+})
+
+test_that("ilinet: a week revised in a later issue takes it; counts are not scaled", {
+  local_cache(); fixture_ilinet()
+  d <- load_panel("ilinet")
+  expect_equal(row_of(d, "ca", "2015-01-04")$y, 720)
+  expect_equal(row_of(d, "ca", "2015-01-04")$exposure, 32500)
+  expect_equal(panel_info("ilinet")$exposure_unit, "count")
+})
+
+test_that("ilinet: New York is fetched whole, not as the city and the rest", {
+  u <- panel_info("ilinet")$files$url
+  regions <- unique(unlist(strsplit(sub("^.*regions=([^&]*)&.*$", "\\1", u), ",")))
+  expect_length(regions, 53L)
+  expect_true("ny" %in% regions)
+  expect_false(any(c("jfk", "ny_minus_jfk") %in% regions))
+})
+
+test_that("ilinet: a week in which no provider reported has no count", {
+  local_cache(); fixture_ilinet()
+  d <- load_panel("ilinet")
+  none <- row_of(d, "vi", "2014-12-28")
+  expect_true(is.na(none$y))
+  expect_equal(none$exposure, 0)
+  d0 <- load_panel("ilinet", exposure = FALSE)
+  expect_equal(d0, d[setdiff(names(d), "exposure")])
+})
+
+test_that("flunet: a null INF_ALL on a report with specimens processed is 0", {
+  local_cache(); fixture_flunet()
+  d <- load_panel("flunet")
+  expect_equal(row_of(d, "AAA", "2017-01-09")$y, 0)
+  expect_equal(row_of(d, "AAA", "2017-01-09")$exposure, 20)
+  expect_equal(row_of(d, "AAA", "2017-01-02")$y, 11)
+})
+
+test_that("flunet: sentinel and non-sentinel reports are summed", {
+  local_cache(); fixture_flunet()
+  d <- load_panel("flunet")
+  expect_equal(row_of(d, "BBB", "2017-01-02")[c("y", "exposure")],
+               data.frame(y = 5, exposure = 80), ignore_attr = TRUE)
+})
+
+test_that("flunet: positives without specimens processed are left out", {
+  local_cache(); fixture_flunet()
+  d <- load_panel("flunet")
+  # the non-sentinel report's 40 positives have no specimens to count them among
+  expect_equal(row_of(d, "BBB", "2017-01-09")[c("y", "exposure")],
+               data.frame(y = 2, exposure = 10), ignore_attr = TRUE)
+  # a week without a report of specimens processed has no count
+  ccc <- d[d$series_id == "CCC", ]
+  expect_true(all(is.na(ccc$y)))
+  expect_equal(ccc$exposure, c(0, 0))
+  d0 <- load_panel("flunet", exposure = FALSE)
+  expect_equal(d0, d[setdiff(names(d), "exposure")])
+})
+
+test_that("flunet: a not-defined report counts unless it repeats the others", {
+  local_cache(); fixture_flunet()
+  d <- load_panel("flunet")
+  ye <- function(id, day) unlist(row_of(d, id, day)[c("y", "exposure")], use.names = FALSE)
+  # repeats the sum of the sentinel and non-sentinel reports
+  expect_equal(ye("BBB", "2017-01-16"), c(6, 60))
+  # repeats the sentinel report
+  expect_equal(ye("FFF", "2017-01-09"), c(1, 23))
+  # other specimens: summed
+  expect_equal(ye("FFF", "2017-01-02"), c(23, 119))
+  # the only report with specimens processed
+  expect_equal(ye("EEE", "2017-01-02"), c(10, 100))
+})
+
+test_that("flunet: a report repeated exactly counts once; regions nest countries", {
+  local_cache(); fixture_flunet()
+  d <- load_panel("flunet")
+  expect_equal(row_of(d, "DDD", "2017-01-02")[c("y", "exposure")],
+               data.frame(y = 3, exposure = 10), ignore_attr = TRUE)
+  expect_equal(levels(d$series_id), c("AAA", "BBB", "CCC", "DDD", "EEE", "FFF"))
+  expect_equal(as.character(unique(d$who_region[d$country == "BBB"])), "EUR")
+  expect_equal(nrow(d), 11L)
+  expect_equal(sort(panel_series("flunet")$series_id), levels(d$series_id))
+})
+
+test_that("bbs: a species not recorded on a standard run counts 0", {
+  local_cache(); fixture_bbs()
+  d <- load_panel("bbs")
+  expect_equal(row_of(d, "2001|7360", "2018-06-10")$y, 0)
+  expect_equal(row_of(d, "4001|3250", "2019-06-16")$y, 0)
+  expect_equal(d$y[d$series_id == "2001|7360"], c(2, 0, NA, 3))
+  # four standard runs on route 2001 for three species, two on 4001 for one
+  expect_equal(nrow(d), 14L)
+})
+
+test_that("bbs: a run that failed the survey's criteria has no count", {
+  local_cache(); fixture_bbs()
+  d <- load_panel("bbs")
+  bad <- row_of(d, "2001|7360", "2019-06-02")
+  expect_true(is.na(bad$y))
+  expect_equal(bad$exposure, 0)
+  expect_equal(sum(d$exposure == 0), 3L)
+  d0 <- load_panel("bbs", exposure = FALSE)
+  expect_equal(d0, d[setdiff(names(d), "exposure")])
+})
+
+test_that("bbs: series are the species recorded on a route's standard runs", {
+  local_cache(); fixture_bbs()
+  d <- load_panel("bbs")
+  # not 2001|9999, seen only on a replicate run; not 2001|3250, never on 2001;
+  # 2001|4740, seen only on the run that failed, is a series
+  expect_equal(levels(d$series_id), c("2001|4740", "2001|6882", "2001|7360", "4001|3250"))
+  expect_false(as.Date("2018-06-11") %in% d$ds)
+  expect_equal(sort(panel_series("bbs")$series_id, method = "radix"), levels(d$series_id))
+})
+
+test_that("bbs: rows carry the run's date, and routes nest in states and countries", {
+  local_cache(); fixture_bbs()
+  d <- load_panel("bbs")
+  expect_equal(d$ds[d$series_id == "4001|3250"], as.Date(c("2018-06-17", "2019-06-16")))
+  expect_equal(levels(d$route), c("2001", "4001"))
+  expect_equal(as.character(unique(d$country[d$state == "4"])), "124")
+  expect_equal(as.character(unique(d$species[d$series_id == "2001|7360"])), "7360")
+  sub <- load_panel("bbs", series = "2001|7360")
+  expect_equal(sub$y, d$y[d$series_id == "2001|7360"])
+})

@@ -6,21 +6,24 @@
 #' |---|---|---|
 #' | `series_id` | factor | the series |
 #' | `ds` | Date | the time point |
-#' | `y` | numeric | the observed value; `NA` where the source records that no observation was made |
+#' | `y` | numeric | the observed value; `NA` where the source records that no observation was made, or that the one made fails its own criteria |
 #' | `exposure` | numeric | present only if the panel records exposure and `exposure = TRUE` |
 #' | margins | factor | the key margins and nested attributes named in [panel_info()] |
 #'
 #' Rows are ordered by `series_id`, then `ds`. Factor levels are sorted in the
 #' C locale, so the order does not depend on the machine.
 #'
-#' **Exposure** is the share of a period during which the value could be
-#' observed, on \[0, 1\]. A model for the mean takes it as a multiplier,
-#' \eqn{E[y_t] = e_t \lambda_t}, where \eqn{\lambda_t} is the value the series
-#' would show with full exposure. Where the source records nothing of the kind
-#' the column is absent. `exposure = FALSE` drops it, and the files used only
-#' to derive it are then not needed. Dropping it does not change `y`: a zero
-#' recorded while a store was shut is still a zero, and a model without
-#' exposure will see it as one.
+#' **Exposure** measures how much of the value could be observed. Its unit,
+#' given by [panels()], is a share of the period on \[0, 1\] (`"fraction"`,
+#' or `"binary"` when it is 0 or 1), or a number of units the value is
+#' observed among (`"count"`), such as patients seen or specimens tested. A
+#' model for the mean takes it as a multiplier, \eqn{E[y_t] = e_t \lambda_t}:
+#' for a share, \eqn{\lambda_t} is the value the series would show with full
+#' exposure; for a count, it is the value per unit. Where the source records
+#' nothing of the kind the column is absent. `exposure = FALSE` drops it, and
+#' the files used only to derive it are then not needed. Dropping it does not
+#' change `y`: a zero recorded while a store was shut is still a zero, and a
+#' model without exposure will see it as one.
 #'
 #' @param name A panel name from [panels()].
 #' @param series Optional character vector of series identifiers to keep;

@@ -16,7 +16,8 @@ check_panel(d, name = NULL, key = NULL, nesting = NULL, exposure_unit = NULL)
 \item{nesting}{Named character vector: attribute = the column it is
 constant within.}
 
-\item{exposure_unit}{\code{"binary"}, \code{"fraction"} or \code{NULL} (non-negative only).}
+\item{exposure_unit}{\code{"binary"}, \code{"fraction"}, \code{"count"} or \code{NULL}. A count
+and \code{NULL} are checked as non-negative only.}
 }
 \value{
 \code{d}, invisibly, if every check passes; otherwise an error listing
@@ -33,8 +34,9 @@ The checks:
 \item \code{series_id}, \code{ds} and \code{y} are present; \code{ds} is a Date and \code{y} numeric.
 \item No series has two rows at the same \code{ds}.
 \item If \code{exposure} is present: numeric, finite, non-negative; at most 1 for a
-\code{"fraction"} unit and 0 or 1 for \code{"binary"}; and no row has a positive
-\code{y} where exposure is 0, which a multiplicative model cannot fit.
+\code{"fraction"} unit and 0 or 1 for \code{"binary"}, with no bound for a
+\code{"count"}; and no row has a positive \code{y} where exposure is 0, which a
+multiplicative model cannot fit.
 \item Each key margin is constant within a series, and no two series share a
 combination of key margins.
 \item Each nested attribute is constant within the column it is nested in.

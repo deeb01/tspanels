@@ -15,8 +15,12 @@
 
 # data.table column names used in non-standard evaluation.
 utils::globalVariables(c(
-  ".", ".I", "cat_id", "d", "date", "day", "dept_id", "ds", "e", "effort",
-  "family", "i.listed", "i.open", "i.y", "id", "item_id", "keep", "listed",
-  "month", "open", "period", "plot", "sales", "sampled", "series_id", "sid",
-  "species", "state_id", "stn", "store_id", "store_nbr", "Store", "wk",
-  "wm_yr_wk", "y", "year"))
+  ".", ".I", "again", "AOU", "cat_id", "COUNTRY_CODE", "CountryNum", "d", "date", "day",
+  "Day", "dept_id", "ds", "e", "effort", "epiweek", "family", "i.listed",
+  "i.open", "i.y", "id", "INF_ALL", "ISO_WEEKSTARTDATE", "item_id", "keep",
+  "listed", "month", "Month", "num_ili", "num_patients", "obs", "open",
+  "ORIGIN_SOURCE", "p", "period", "plot", "pos", "region", "Route", "route",
+  "RouteDataID", "RPID", "RunType", "sales", "sampled", "series_id", "sid",
+  "SPEC_PROCESSED_NB", "species", "SpeciesTotal", "state_id",
+  "StateNum", "stn", "store_id", "store_nbr", "Store", "use", "WHOREGION",
+  "wk", "wm_yr_wk", "y", "year", "Year"))

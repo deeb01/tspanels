@@ -79,3 +79,34 @@ test_that("panel_dir follows TSPANELS_CACHE", {
   expect_equal(panel_dir("portal"), file.path(root, "portal"))
   expect_error(panel_dir("nope"), "Unknown panel")
 })
+
+test_that("a file from a live API that has changed is kept, with a warning", {
+  root <- local_cache()
+  g <- src_file(c("a,b", "1,3"))
+  dest <- file.path(root, "x")
+  expect_warning(
+    tspanels:::.fetch_files(files_for(g, strrep("0", 64)), dest, quiet = TRUE,
+                            snapshot = "2026-10-12"),
+    "differs from the snapshot of 2026-10-12")
+  expect_true(file.exists(file.path(dest, basename(g))))
+  expect_length(list.files(dest, pattern = "\\.part$"), 0L)
+})
+
+test_that("only the panels served by a live API are snapshots", {
+  live <- vapply(panels()$name, function(n) !is.na(panel_info(n)$snapshot), logical(1))
+  expect_equal(names(live)[live], c("flunet", "ilinet"))
+  for (n in panels()$name) expect_true(nzchar(panel_info(n)$pin), info = n)
+})
+
+test_that("fetch_panel keeps a changed snapshot and refuses a changed fixed file", {
+  root <- local_cache()
+  g <- src_file(c("a,b", "1,3"))
+  toy <- function(snapshot) list(access = "fetch", snapshot = snapshot,
+                                 files = files_for(g, strrep("0", 64)))
+  on.exit(rm("toylive", envir = tspanels:::.PANELS), add = TRUE)
+  tspanels:::.register("toylive", toy(NA_character_))
+  expect_error(fetch_panel("toylive", quiet = TRUE), "Checksum mismatch")
+  tspanels:::.register("toylive", toy("2026-10-12"))
+  expect_warning(fetch_panel("toylive", quiet = TRUE), "differs from the snapshot")
+  expect_true(file.exists(file.path(panel_dir("toylive"), basename(g))))
+})

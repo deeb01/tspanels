@@ -13,8 +13,10 @@ panel_info(name)
 A list: \code{title}, \code{domain}, \code{freq}, \code{key}, \code{nesting} (a named
 character vector, attribute = the column it is constant within),
 \code{exposure} (how it is derived, or \code{NA}), \code{exposure_unit}, \code{n_series},
-\code{start}, \code{end}, \code{notes}, \code{access}, \code{source}, \code{licence}, and \code{files} (a
-data frame of file, role, sha256 and url).
+\code{start}, \code{end}, \code{notes}, \code{access}, \code{pin} (what fixes the content of the
+raw files), \code{snapshot} (for files served by a live API, the date their
+checksums were taken, otherwise \code{NA}), \code{source}, \code{licence}, and \code{files}
+(a data frame of file, role, sha256 and url).
 }
 \description{
 Everything recorded about one panel

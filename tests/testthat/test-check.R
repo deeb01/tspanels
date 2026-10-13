@@ -59,3 +59,11 @@ test_that("the old favorita exposure rule fails the check", {
   d$exposure[d$store_nbr == "2" & d$ds == as.Date("2015-03-04")] <- 0
   expect_error(check_panel(d, "favorita"), "positive y where exposure is 0")
 })
+
+test_that("a count exposure is checked as non-negative only", {
+  d <- good(); d$exposure <- c(40, 0, 12, 300, 2, 7)
+  expect_silent(check_panel(d, exposure_unit = "count"))
+  d$exposure[1] <- -1
+  expect_error(check_panel(d, exposure_unit = "count"), "negative")
+  expect_error(check_panel(good(), exposure_unit = "share"), "must be")
+})
